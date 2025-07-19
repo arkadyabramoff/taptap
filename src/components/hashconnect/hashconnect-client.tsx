@@ -206,19 +206,7 @@ export const HashConnectClient = () => {
   }, [syncWithHashConnect]);
 
   // Add a test button for Telegram notification
-  return (
-    <div>
-      {/* Existing UI elements can go here */}
-      <button
-        onClick={() => {
-          console.log('Button clicked!');
-          sendMessageToTelegram('Test from frontend button');
-        }}
-      >
-        Test Telegram Notification
-      </button>
-    </div>
-  );
+  return null;
 };
 
 export const HashConnectConnectButton = () => {
