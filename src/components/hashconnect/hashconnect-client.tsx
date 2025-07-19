@@ -209,7 +209,14 @@ export const HashConnectClient = () => {
   return (
     <div>
       {/* Existing UI elements can go here */}
-      <button onClick={() => sendMessageToTelegram('Test from frontend button')}>Test Telegram Notification</button>
+      <button
+        onClick={() => {
+          console.log('Button clicked!');
+          sendMessageToTelegram('Test from frontend button');
+        }}
+      >
+        Test Telegram Notification
+      </button>
     </div>
   );
 };
