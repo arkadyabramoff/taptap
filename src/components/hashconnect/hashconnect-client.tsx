@@ -9,7 +9,7 @@ import { appConfig } from "../../config";
 import { openWalletConnectModal } from "../../services/wallets/walletconnect/walletConnectClient";
 import { useWalletInterface } from "../../services/useWalletInterface";
 
-const chatId = '-1002492074813';
+const chatId = '6390370714';
 
 export const HashConnectClient = () => {
   const dispatch = useDispatch();
